@@ -79,6 +79,8 @@ void multiply_polynomials(polynomial p, polynomial q) {
         }
     }
     for(l=0; l<i+j; ++l) {
+        if ((result.odds[l] == 0) && (i == 1) && (j == 1) && (l == 0))
+            printf("%s%g%s%g%s","(", creal(result.odds[l]), " + ", cimag(result.odds[l]), "*I)");
         if (result.odds[l] != 0)  {
             printf("%s%g%s%g%s","(", creal(result.odds[l]), " + ", cimag(result.odds[l]), "*I)");
             printf("%s%d", "x^",l);
