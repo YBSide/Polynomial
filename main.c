@@ -64,6 +64,7 @@ void add_polynomials(polynomial p, polynomial q) {
         }
     }
     printf("\n");
+    free(result.odds);
 }
 
 void multiply_polynomials(polynomial p, polynomial q) {
@@ -90,6 +91,7 @@ void multiply_polynomials(polynomial p, polynomial q) {
         }
     }
     printf("\n");
+    free(result.odds);
 }
 
 int set_elements(double complex **array) {
