@@ -91,7 +91,6 @@ void multiply_polynomials(polynomial p, polynomial q) {
         }
     }
     printf("\n");
-    free(result.odds);
 }
 
 int set_elements(double complex **array) {
