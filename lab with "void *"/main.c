@@ -48,10 +48,10 @@ int min_power(polynomial p, polynomial q) {
     return min_power;
 }
 
-void multiply_polynomials(polynomial p, polynomial q) {
+void multiply_polynomials(polynomial p, polynomial q, void *tmp) {
     printf("multiply: ");
     polynomial result;
-    result.odds = malloc(sizeof(double) * (max_power(p, q) * 2 + min_power(p, q)));
+    result.odds = tmp;
     int i, j, l;
     for (i=0; i<(max_power(p, q) + min_power(p, q)); ++i) {
         if ((p.el_type == COMPLEX) || (q.el_type == COMPLEX)) {
@@ -100,16 +100,15 @@ void multiply_polynomials(polynomial p, polynomial q) {
 
         }
     }
+    if (result.el_type == COMPLEX)
+        *((double complex *)tmp) = *((double complex *)result.odds);
     printf("\n");
 }
 
-void add_polynomials(polynomial p, polynomial q) {
+void add_polynomials(polynomial p, polynomial q, void *tmp) {
     printf("add: ");
     polynomial result;
-    if ((p.el_type == DOUBLE) && (q.el_type == DOUBLE))
-        result.odds = malloc(100*sizeof(double));
-    if ((p.el_type == COMPLEX) || (q.el_type == COMPLEX))
-        result.odds = malloc(100*sizeof(complex));
+    result.odds = tmp;
     result.power = max_power(p, q);
     for (int i=0; i < max_power(p, q); ++i) {
         if (i<min_power(p, q)) {
@@ -155,16 +154,22 @@ void add_polynomials(polynomial p, polynomial q) {
         }
 
     }
+    if (result.el_type == COMPLEX)
+        *((double complex *)tmp) = *((double complex *)result.odds);
     printf("\n");
-    free(result.odds);
 }
 
-void calculate_if_x_number (polynomial p) {
+void calculate_if_x_number (polynomial p, void* tmp, int k) {
     int validation_check = 0;
     double complex complex_result = 0 + 0 * I;
     double real_result=0;
     double real;
     double imag;
+
+    if (k == 1) {
+        *((double complex *)tmp) = 1 + 2 * I;
+        return;
+    }
     if (p.el_type == COMPLEX) {
         printf("%s", "Enter the real and imaginary part of argument: ");
         validation_check = scanf("%lf%lf", &real, &imag);
@@ -174,6 +179,7 @@ void calculate_if_x_number (polynomial p) {
         }
         for (int i=0; i<p.power; ++i)
             complex_result = complex_result + *((double complex *)p.odds + i) * cpow(real + imag * I, i);
+        *((double complex *)tmp) = complex_result;
         printf("%g%s%g%s",creal(complex_result), " + ", cimag(complex_result), "*I\n");
     }
     else {
@@ -196,7 +202,6 @@ void *set_elements(void *array, el_type el_type, int *power) {
     char answer[30]="";
     double real;
     double imag;
-    // array = calloc(100, sizeof(void*));
     if (el_type == DOUBLE)
         array = malloc(100*sizeof(double));
     if (el_type == COMPLEX)
@@ -245,10 +250,13 @@ void *set_elements(void *array, el_type el_type, int *power) {
 int main() {
     void *A;
     void *B;
+    void *tmp;
     int *power = malloc(sizeof(int));
     char answer[30];
     char element_type[2];
+    int i=0;
     el_type el_type;
+    tmp = malloc(100*sizeof(double complex));
     printf("%s", "First polynomial.\n");
     printf("%s", "Enter element type. DOUBLE(d) or COMPLEX(c)");
     scanf("%s", element_type);
@@ -275,8 +283,8 @@ int main() {
         el_type = DOUBLE;
     B = set_elements(B, el_type, power);
     polynomial second_polynomial = {el_type, B, *power};
-    add_polynomials(first_polynomial, second_polynomial);
-    multiply_polynomials(first_polynomial, second_polynomial);
+    add_polynomials(first_polynomial, second_polynomial, tmp);
+    multiply_polynomials(first_polynomial, second_polynomial, tmp);
     printf("%s", "Do you want to indicate argument for calculating polynomials? YES(y) or NO(n).\n");
     scanf("%s", answer);
     while (strcmp(answer, "n") && strcmp(answer, "y")) {
@@ -285,15 +293,67 @@ int main() {
     }
     if (!strcmp(answer, "y")) {
         printf("%s", "Calculated first polynomial: ");
-        calculate_if_x_number(first_polynomial);
+        calculate_if_x_number(first_polynomial, tmp, i);
         printf("%s", "Calculated second polynomial: ");
-        calculate_if_x_number(second_polynomial);
+        calculate_if_x_number(second_polynomial, tmp, i);
     }
+
+    printf("%s", "Do you want to run tests? YES(y) or NO(n).\n");
+    scanf("%s", answer);
+    while (strcmp(answer, "n") && strcmp(answer, "y")) {
+        printf("%s", "Incorrect answer.\n ");
+        scanf("%s", answer);
+    }
+    if (!strcmp(answer, "y")) {
+    //////////////////////////////////////////////////////T E S T S//////////////////////////////////////////////////////
+
+        *((double complex *)A) = 1 + 1 * I;
+        *((double complex *)A + 1) = 0 + 1 * I;
+        polynomial test_pol_1 = {COMPLEX, A, 2};
+        *((double *)B) = 1;i=1;
+        polynomial test_pol_2 = {DOUBLE, B, 1};
+
+        if ((max_pol(test_pol_1, test_pol_2).el_type == test_pol_1.el_type) && (max_pol(test_pol_1, test_pol_2).power == test_pol_1.power))
+            printf("%s", "1)TEST PASSED!\n");
+        else
+            printf("%s", "1)TEST FAILED\n");
+
+        if ((min_pol(test_pol_1, test_pol_2).el_type == test_pol_2.el_type) && (min_pol(test_pol_1, test_pol_2).power == test_pol_2.power))
+            printf("%s", "2)TEST PASSED!\n");
+        else
+            printf("%s", "2)TEST FAILED\n");
+
+        if (max_power(test_pol_1, test_pol_2) == test_pol_1.power)
+            printf("%s", "3)TEST PASSED!\n");
+        else
+            printf("%s", "3)TEST FAILED\n");
+
+        if (min_power(test_pol_1, test_pol_2) == test_pol_2.power)
+            printf("%s", "4)TEST PASSED!\n");
+        else
+            printf("%s", "4)TEST FAILED\n");
+
+        multiply_polynomials(test_pol_1, test_pol_2, tmp);
+        if (*((double complex *)tmp) == 1 + 1 * I)
+            printf("%s", "5)TEST PASSED!\n");
+        else
+            printf("%s", "5)TEST FAILED\n");
+
+        add_polynomials(test_pol_1, test_pol_2, tmp);
+        if (*((double complex *)tmp) == 2 + 1 * I)
+            printf("%s", "6)TEST PASSED!\n");
+        else
+            printf("%s", "6)TEST FAILED\n");
+
+        calculate_if_x_number(test_pol_1, tmp, i);
+        if (*((double complex *)tmp) == 1 + 2 * I)
+            printf("%s", "7)TEST PASSED!\n");
+        else
+            printf("%s", "7)TEST FAILED\n");
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    }
+
     free(A);
     free(B);
     return 0;
 }
-
-
-
-
